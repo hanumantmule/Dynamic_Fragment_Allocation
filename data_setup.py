@@ -6,18 +6,6 @@ from datetime import datetime
 import time
 
 
-def get_all_rows(label):
-    # Query all rows
-    cur = conn.cursor()
-    statement = 'select afid, asid, ADateTime, dataVol from log_info'
-    cur.execute(statement)
-    res = cur.fetchall()
-    print(label + ': ')
-    print(res)
-    print(' ')
-    cur.close()
-
-
 def str_time_prop(start, end, format, prop):
     stime = time.mktime(time.strptime(start, format))
     etime = time.mktime(time.strptime(end, format))
@@ -31,13 +19,23 @@ def random_date(start, end, prop):
 
 def insert_log_info(fragment_no, site_no, adatetime, access_type, data_vol, table_site):
     # construct an insert statement that add a new row to the billing_headers table
-    table_name = 'log_info_' + table_site
+    table_name = 'log_info_' + table_site.lower()
     sql = ('insert into ' + table_name + ' (AFID, ASID, ADateTime, RorWAS, DataVol) '
                                          'values(:fragment_no,:site_no,:adatetime, :access_type, :data_vol)')
-    cursor = conn.cursor()
-    cursor.execute(sql, [fragment_no, site_no, adatetime, access_type, data_vol])
-    # commit work
-    conn.commit()
+
+    mysql_query = ('insert into ' + table_name + ' (AFID, ASID, ADateTime, RorWAS, DataVol) values (%s,%s,%s,%s,%s)')
+
+    if table_site in MYSQL_SITES:
+        cursor = mySqlCon.cursor()
+        cursor.execute(mysql_query, [fragment_no, site_no, adatetime, access_type, data_vol])
+        cursor.close()
+        # commit work
+        mySqlCon.commit()
+    else:
+        cursor = conn.cursor()
+        cursor.execute(sql, [fragment_no, site_no, adatetime, access_type, data_vol])
+        # commit work
+        conn.commit()
 
 
 def insert_log_data(fragment_list, site_no, sites):
@@ -127,7 +125,12 @@ def initial_setup(dictonary):
     for i in range(1, 5):
         table_name = 'log_info_s' + str(i)
         realloc_update_query = 'truncate table ' + table_name
-        cur = conn.cursor()
+
+        if 'S' + str(i) in MYSQL_SITES:
+            cur = mySqlCon.cursor()
+        else:
+            cur = conn.cursor()
+
         cur.execute(realloc_update_query)
         res = conn.commit()
         cur.close()
