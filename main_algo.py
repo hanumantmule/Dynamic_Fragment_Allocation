@@ -3,7 +3,9 @@ from fragment_reallocation import *
 
 # ---------------------------------- Main Flow -----------------------------------------
 def main():
+
     # Horizontal fragmentation and initial allocation.
+
     initial_allocation = {'F1': 'S1', 'F2': 'S4', 'F3': 'S3', 'F4': 'S2',
                           'F5': 'S1', 'F6': 'S4', 'F7': 'S2', 'F8': 'S3'}
     initial_setup(initial_allocation)
@@ -27,7 +29,7 @@ def main():
     for s, k in site_fragment_reallocation_dict.items():
         print(s, '-->', k, '\n')
 
-    # Update fragment allocation table as per new reallocation output
+    # Reallocate the fragment to that site and update the allocation information matrix.
     update_fragment_reallocation(site_fragment_reallocation_dict)
 
 

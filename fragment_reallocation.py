@@ -92,6 +92,8 @@ def fetch_avg_write_vol_for_site(table_name, fragment_name, elgbl_site_name, wri
     return avg_for_write_elg_site or 0
 
 
+# -----------------------------Algorithm Flow------------------------------------
+
 def fragment_reallocation_main(site_fragment_static_dict):
     site_fragment_realloc_dict = {}
 
@@ -105,13 +107,15 @@ def fragment_reallocation_main(site_fragment_static_dict):
             table_name = 'log_info_' + site_name.lower()
             eligible_sites = []  # List of all eligible sites for reallocation
 
-            # find average volume of read and write between fragment F and all sites
+            # Step 2: Calculate the average volume of read and write data transmitted between fragment Fi and all the
+            # sites (including local site Sy) that made access to the fragment Fi.
+
             avg_vol_from_all_sites = fetch_avg_vol_from_all_sites(table_name, fragment_f)
             print(
                 "\n\nAverage volume of read and write data between fragment " + fragment_f + " and all the sites = " + str(
                     avg_vol_from_all_sites))
 
-            # For each remote site s
+            # Find remote site lists for site Si which satisfies the access threshold limit
             remote_site_list = fetch_all_remote_sites(access_threshold_site, table_name, fragment_f, site_name)
             print("Remote Site list that satisfies access threshold: " + str(remote_site_list))
 
@@ -119,6 +123,8 @@ def fragment_reallocation_main(site_fragment_static_dict):
 
             for remote_site in remote_site_list:
 
+                # Step 3: Calculate the average volume of read and write data transmitted of each accessing remote site.
+                # If Step 3 result < Step 2 result , Then do nothing. Else go to next step
                 avg_vol_for_remote_site_s = fetch_avg_vol_from_remote_site(table_name, fragment_f,
                                                                            remote_site)
 
@@ -129,9 +135,16 @@ def fragment_reallocation_main(site_fragment_static_dict):
 
             print("Remote sites which are eligible for fragment allocation:" + str(eligible_sites))
             if len(eligible_sites) == 1:
+                # Step 4: If there is only one accessing remote site Sx qualify constraints stated in Step 3 Then,
+                # Reallocate fragment fi to remote site Sx and remove from the current site Sy,
+
                 site_fragment_realloc_dict[fragment_f] = eligible_sites[0]
                 print("\n ----***----Allocate Fragment " + fragment_f + " at site " + eligible_sites[0] + "----***--\n")
             elif len(eligible_sites) > 1:
+                # Step 5: If more than one sites qualify constraints stated in step 3 Then, Calculate the volume of
+                # write data transmitted between the fragment Fi and all qualified remote sites within time interval.
+                # Finally select the site which has maximum write data volume than other sites.
+
                 max_write_count = 0
                 max_write_elgbl_site = ''
                 print("More than one Eligible sites found. Calculate volume for write data for each site.")
@@ -149,7 +162,8 @@ def fragment_reallocation_main(site_fragment_static_dict):
                 site_fragment_realloc_dict[fragment_f] = max_write_elgbl_site
     return site_fragment_realloc_dict
 
-
+# ------------------------------------------------------------------------------------------------------------
+# Reallocate the fragment to that site and update the allocation information matrix.
 def update_fragment_reallocation(dictonary):
     for fragment, site in dictonary.items():
         realloc_update_query = 'update fragment_alloc_site_mapping set site_name= :site where fragment_name= :fragment'
