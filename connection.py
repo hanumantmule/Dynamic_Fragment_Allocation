@@ -12,7 +12,8 @@ conn = cx_Oracle.connect("SYS", "SYS", dsn, cx_Oracle.SYSDBA, encoding="UTF-8")
 print(conn)
 
 # Open MYSQL connection
-mySqlCon = pymysql.connect("localhost","devgamingstaan","@Hani8655","GamingStaan" )
+# Replace with your MYSQL connections
+mySqlCon = pymysql.connect("localhost","devgamingstaan","********","*****" )
 
 print(mySqlCon)
 # make_query()
